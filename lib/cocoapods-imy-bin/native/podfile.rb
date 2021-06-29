@@ -72,7 +72,7 @@ module Pod
     private
 
     def valid_bin_plugin
-      unless plugins.keys.include?('cocoapods-imy-bin')
+      unless plugins.keys.include?('cocoapods-imy-hycan-bin')
         raise Pod::Informative, 'You should add `plugin \'cocoapods-imy-bin\'` before using its DSL'
       end
     end
