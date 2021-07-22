@@ -142,7 +142,7 @@ module CBin
       end
 
       def ios_build_options
-        "ARCHS=\'#{ios_architectures.join(' ')}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\'"
+        "ARCHS=\'#{ios_architectures.join(' ')}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\' ENABLE_BITCODE=\'NO\'"
       end
 
       def ios_architectures
@@ -158,7 +158,7 @@ module CBin
         #   iphone5,iphone5s以下的模拟器
         # >x86_64
         #   iphone6以上的模拟器
-        archs = %w[arm64 armv7]
+        archs = %w[arm64]
         # archs = %w[x86_64 arm64 armv7s i386]
         # @vendored_libraries.each do |library|
         #   archs = `lipo -info #{library}`.split & archs
@@ -183,7 +183,7 @@ module CBin
           archs = ios_architectures
           # archs = %w[arm64 armv7 armv7s]
           archs.map do |arch|
-            xcodebuild(defines, "ARCHS=\'#{arch}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\'","build-#{arch}",@build_model)
+            xcodebuild(defines, "ENABLE_BITCODE=\'NO\' ARCHS=\'#{arch}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\'","build-#{arch}",@build_model)
           end
         # else
           # xcodebuild(defines,options)
