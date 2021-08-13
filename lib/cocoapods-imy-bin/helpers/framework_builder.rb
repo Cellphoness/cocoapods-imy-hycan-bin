@@ -104,7 +104,7 @@ module CBin
         # archs = %w[i386 x86_64]
         archs = ios_architectures_sim
         archs.map do |arch|
-          xcodebuild(defines, "-sdk iphonesimulator ARCHS=\'#{arch}\' ", "build-#{arch}",@build_model)
+          xcodebuild(defines, "-sdk iphonesimulator ARCHS=\'#{arch}\' BUILD_LIBRARY_FOR_DISTRIBUTION=\'YES\'", "build-#{arch}",@build_model)
         end
 
       end
@@ -142,7 +142,7 @@ module CBin
       end
 
       def ios_build_options
-        "ARCHS=\'#{ios_architectures.join(' ')}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\' ENABLE_BITCODE=\'NO\'"
+        "ARCHS=\'#{ios_architectures.join(' ')}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\' ENABLE_BITCODE=\'NO\' BUILD_LIBRARY_FOR_DISTRIBUTION=\'YES\'"
       end
 
       def ios_architectures
@@ -183,7 +183,7 @@ module CBin
           archs = ios_architectures
           # archs = %w[arm64 armv7 armv7s]
           archs.map do |arch|
-            xcodebuild(defines, "ENABLE_BITCODE=\'NO\' ARCHS=\'#{arch}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\'","build-#{arch}",@build_model)
+            xcodebuild(defines, "BUILD_LIBRARY_FOR_DISTRIBUTION=\'YES\' ENABLE_BITCODE=\'NO\' ARCHS=\'#{arch}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\'","build-#{arch}",@build_model)
           end
         # else
           # xcodebuild(defines,options)
