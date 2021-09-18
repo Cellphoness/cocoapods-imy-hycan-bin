@@ -63,6 +63,8 @@ module Pod
         end
 
         def run
+          UI.warn "run in auto"
+
           # 清除之前的缓存
           CBin::Config::Builder.instance.clean
 
@@ -180,12 +182,15 @@ module Pod
 
         def swift_pods_buildsetting
           # swift_project_link_header
+          UI.warn "def swift_project_link_header"
           worksppace_path = File.expand_path("#{CBin::Config::Builder.instance.gen_dir}/#{@spec.name}")
           path = File.join(worksppace_path, "Pods.xcodeproj")
           path = File.join(worksppace_path, "Pods/Pods.xcodeproj") unless File.exist?(path)
           raise Informative,  "#{path} File no exist, please check" unless File.exist?(path)
           project = Xcodeproj::Project.open(path)
+          UI.warn project.build_configurations
           project.build_configurations.each do |x|
+            UI.warn x
             x.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = true #设置生成swift inter
           end
           project.save

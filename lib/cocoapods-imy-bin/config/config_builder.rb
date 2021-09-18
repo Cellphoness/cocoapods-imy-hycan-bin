@@ -59,11 +59,13 @@ module CBin
 
 
       def framework_name(spec)
-        "#{spec.name}.framework"
+        custom_name = spec.module_name.nil? ? spec.name : spec.module_name
+        "#{custom_name}.framework"
       end
 
       def framework_name_version(spec)
-        "#{spec.name}.framework_#{spec.version}"
+        custom_name = spec.module_name.nil? ? spec.name : spec.module_name
+        "#{custom_name}.framework_#{spec.version}"
       end
 
       def framework_zip_file(spec)

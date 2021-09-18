@@ -43,9 +43,12 @@ module CBin
         if CBin::Build::Utils.is_swift_module(@spec) || !CBin::Build::Utils.uses_frameworks?
           UI.section("Building static Library #{@spec}") do
             # defines = compile
-
+            puts 'mark:'
+            puts @spec.module_name
+            puts @spec.name
             # build_sim_libraries(defines)
-            output = framework.versions_path + Pathname.new(@spec.name)
+            custom_name = @spec.module_name.nil? ? @spec.name : @spec.module_name
+            output = framework.versions_path + Pathname.new(custom_name)
 
             build_static_library_for_ios(output)
 
@@ -60,8 +63,12 @@ module CBin
             UI.section("Building framework  #{@spec}") do
               # defines = compile
 
+              puts 'mark:'
+              puts @spec.module_name
+              puts @spec.name
               # build_sim_libraries(defines)
-              output = framework.fwk_path + Pathname.new(@spec.name)
+              custom_name = @spec.module_name.nil? ? @spec.name : @spec.module_name
+              output = framework.fwk_path + Pathname.new(custom_name)
 
               copy_static_framework_dir_for_ios
 
@@ -86,8 +93,9 @@ module CBin
       def cp_to_source_dir
         # 删除Versions 软链接
         framework.remove_current_version if CBin::Build::Utils.is_swift_module(@spec)
+        custom_name = @spec.module_name.nil? ? @spec.name : @spec.module_name
 
-        framework_name = "#{@spec.name}.framework"
+        framework_name = "#{custom_name}.framework"
         target_dir = File.join(CBin::Config::Builder.instance.zip_dir,framework_name)
         FileUtils.rm_rf(target_dir) if File.exist?(target_dir)
 
@@ -104,7 +112,7 @@ module CBin
         # archs = %w[i386 x86_64]
         archs = ios_architectures_sim
         archs.map do |arch|
-          xcodebuild(defines, "-sdk iphonesimulator ARCHS=\'#{arch}\' BUILD_LIBRARY_FOR_DISTRIBUTION=\'YES\'", "build-#{arch}",@build_model)
+          xcodebuild(defines, "-sdk iphonesimulator ARCHS=\'#{arch}\'", "build-#{arch}",@build_model)
         end
 
       end
@@ -142,7 +150,7 @@ module CBin
       end
 
       def ios_build_options
-        "ARCHS=\'#{ios_architectures.join(' ')}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\' ENABLE_BITCODE=\'NO\' BUILD_LIBRARY_FOR_DISTRIBUTION=\'YES\'"
+        "ARCHS=\'#{ios_architectures.join(' ')}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\' ENABLE_BITCODE=\'NO\'"
       end
 
       def ios_architectures
@@ -183,7 +191,7 @@ module CBin
           archs = ios_architectures
           # archs = %w[arm64 armv7 armv7s]
           archs.map do |arch|
-            xcodebuild(defines, "BUILD_LIBRARY_FOR_DISTRIBUTION=\'YES\' ENABLE_BITCODE=\'NO\' ARCHS=\'#{arch}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\'","build-#{arch}",@build_model)
+            xcodebuild(defines, "ENABLE_BITCODE=\'NO\' ARCHS=\'#{arch}\' OTHER_CFLAGS=\'-fembed-bitcode -Qunused-arguments\'","build-#{arch}",@build_model)
           end
         # else
           # xcodebuild(defines,options)
@@ -209,9 +217,9 @@ module CBin
       def xcodebuild(defines = '', args = '', build_dir = 'build', build_model = 'Debug')
 
         unless File.exist?("Pods.xcodeproj") #cocoapods-generate v2.0.0
-          command = "xcodebuild #{defines} #{args} CONFIGURATION_BUILD_DIR=#{File.join(File.expand_path("..", build_dir), File.basename(build_dir))} clean build -configuration #{build_model} -target #{target_name} -project ./Pods/Pods.xcodeproj 2>&1"
+          command = "xcodebuild #{defines} #{args} BUILD_LIBRARY_FOR_DISTRIBUTION=YES CONFIGURATION_BUILD_DIR=#{File.join(File.expand_path("..", build_dir), File.basename(build_dir))} clean build -configuration #{build_model} -target #{target_name} -project ./Pods/Pods.xcodeproj 2>&1"
         else
-          command = "xcodebuild #{defines} #{args} CONFIGURATION_BUILD_DIR=#{build_dir} clean build -configuration #{build_model} -target #{target_name} -project ./Pods.xcodeproj 2>&1"
+          command = "xcodebuild #{defines} #{args} BUILD_LIBRARY_FOR_DISTRIBUTION=YES CONFIGURATION_BUILD_DIR=#{build_dir} clean build -configuration #{build_model} -target #{target_name} -project ./Pods.xcodeproj 2>&1"
         end
 
         UI.message "command = #{command}"
@@ -231,12 +239,13 @@ module CBin
       def copy_headers
         #走 podsepc中的public_headers
         public_headers = Array.new
+        custom_name = @spec.module_name.nil? ? @spec.name : @spec.module_name
 
         #by slj 如果没有头文件，去 "Headers/Public"拿
         # if public_headers.empty?
-        spec_header_dir = "./Headers/Public/#{@spec.name}"
+        spec_header_dir = "./Headers/Public/#{custom_name}"
         unless File.exist?(spec_header_dir)
-          spec_header_dir = "./Pods/Headers/Public/#{@spec.name}"
+          spec_header_dir = "./Pods/Headers/Public/#{custom_name}"
         end
         raise "copy_headers #{spec_header_dir} no exist " unless File.exist?(spec_header_dir)
         Dir.chdir(spec_header_dir) do
@@ -261,10 +270,10 @@ module CBin
           if Pathname(module_map_file).exist?
             module_map = File.read(module_map_file)
           end
-        elsif public_headers.map(&:basename).map(&:to_s).include?("#{@spec.name}-umbrella.h")
+        elsif public_headers.map(&:basename).map(&:to_s).include?("#{custom_name}-umbrella.h")
           module_map = <<-MAP
-          framework module #{@spec.name} {
-            umbrella header "#{@spec.name}-umbrella.h"
+          framework module #{custom_name} {
+            umbrella header "#{custom_name}-umbrella.h"
 
             export *
             module * { export * }
@@ -285,12 +294,12 @@ module CBin
           # todo 所有架构的swiftModule拷贝到 framework.swift_module_path
           archs = ios_architectures + ios_architectures_sim
           archs.map do |arch|
-            swift_module = "build-#{arch}/#{@spec.name}.swiftmodule"
+            swift_module = "build-#{arch}/#{custom_name}.swiftmodule"
             if File.directory?(swift_module)
               FileUtils.cp_r("#{swift_module}/.", framework.swift_module_path)
             end
           end
-          swift_Compatibility_Header = "build-#{archs.first}/Swift\ Compatibility\ Header/#{@spec.name}-Swift.h"
+          swift_Compatibility_Header = "build-#{archs.first}/Swift\ Compatibility\ Header/#{custom_name}-Swift.h"
           FileUtils.cp(swift_Compatibility_Header,framework.headers_path) if File.exist?(swift_Compatibility_Header)
           info_plist_file = File.join(File.dirname(__FILE__),"info.plist")
           FileUtils.cp(info_plist_file,framework.fwk_path)
@@ -374,6 +383,8 @@ module CBin
       #---------------------------------swift--------------------------------------#
       #   lipo -create .a
       def build_static_framework_machO_for_ios(output)
+        custom_name = @spec.module_name.nil? ? @spec.name : @spec.module_name
+
         UI.message "Building ios framework with archs #{ios_architectures}"
 
         static_libs = static_libs_in_sandbox('build') + @vendored_libraries
@@ -389,7 +400,7 @@ module CBin
         build_path.mkpath unless build_path.exist?
 
         libs = (ios_architectures + ios_architectures_sim) .map do |arch|
-          library = "build-#{arch}/#{@spec.name}.framework/#{@spec.name}"
+          library = "build-#{arch}/#{custom_name}.framework/#{custom_name}"
           library
         end
 
@@ -398,19 +409,19 @@ module CBin
       end
 
       def copy_static_framework_dir_for_ios
-
+        custom_name = @spec.module_name.nil? ? @spec.name : @spec.module_name
         archs = ios_architectures + ios_architectures_sim
-        framework_dir = "build-#{ios_architectures_sim.first}/#{@spec.name}.framework"
-        framework_dir = "build-#{ios_architectures.first}/#{@spec.name}.framework" unless File.exist?(framework_dir)
+        framework_dir = "build-#{ios_architectures_sim.first}/#{custom_name}.framework"
+        framework_dir = "build-#{ios_architectures.first}/#{custom_name}.framework" unless File.exist?(framework_dir)
         unless File.exist?(framework_dir)
           raise "#{framework_dir} path no exist"
         end
-        File.join(Dir.pwd, "build-#{ios_architectures_sim.first}/#{@spec.name}.framework")
+        File.join(Dir.pwd, "build-#{ios_architectures_sim.first}/#{custom_name}.framework")
         FileUtils.cp_r(framework_dir, framework.root_path)
 
         # todo 所有架构的swiftModule拷贝到 framework.swift_module_path
         archs.map do |arch|
-          swift_module = "build-#{arch}/#{@spec.name}.framework/Modules/#{@spec.name}.swiftmodule"
+          swift_module = "build-#{arch}/#{custom_name}.framework/Modules/#{custom_name}.swiftmodule"
           if File.directory?(swift_module)
             FileUtils.cp_r("#{swift_module}/.", framework.swift_module_path)
           end
@@ -432,7 +443,8 @@ module CBin
 
       def framework
         @framework ||= begin
-          framework = Framework.new(@spec.name, @platform.name.to_s)
+          custom_name = @spec.module_name.nil? ? @spec.name : @spec.module_name
+          framework = Framework.new(custom_name, @platform.name.to_s)
           framework.make
           framework
         end
