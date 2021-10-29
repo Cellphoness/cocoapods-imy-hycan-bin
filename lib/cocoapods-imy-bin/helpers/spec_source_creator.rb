@@ -131,9 +131,10 @@ module CBin
         @spec = code_spec.dup
         # vendored_frameworks | resources | source | source_files | public_header_files
         # license | resource_bundles | vendored_libraries
+        custom_name = code_spec.root.module_name.nil? ? code_spec.root.name : code_spec.root.module_name
 
         # Project Linkin
-        @spec.vendored_frameworks = "#{code_spec.root.name}.framework"
+        @spec.vendored_frameworks = "#{custom_name}.framework"
 
         # Resources
         extnames = []
