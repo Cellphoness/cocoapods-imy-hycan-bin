@@ -191,7 +191,7 @@ module Pod
           UI.warn project.build_configurations
           project.build_configurations.each do |x|
             UI.warn x
-            x.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = true #设置生成swift inter
+            x.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'#true #设置生成swift inter
           end
           project.save
         end

@@ -217,9 +217,9 @@ module CBin
       def xcodebuild(defines = '', args = '', build_dir = 'build', build_model = 'Debug')
 
         unless File.exist?("Pods.xcodeproj") #cocoapods-generate v2.0.0
-          command = "xcodebuild #{defines} #{args} BUILD_LIBRARY_FOR_DISTRIBUTION=YES CONFIGURATION_BUILD_DIR=#{File.join(File.expand_path("..", build_dir), File.basename(build_dir))} clean build -configuration #{build_model} -target #{target_name} -project ./Pods/Pods.xcodeproj 2>&1"
+          command = "xcodebuild #{defines} #{args} BUILD_LIBRARY_FOR_DISTRIBUTION=NO CONFIGURATION_BUILD_DIR=#{File.join(File.expand_path("..", build_dir), File.basename(build_dir))} clean build -configuration #{build_model} -target #{target_name} -project ./Pods/Pods.xcodeproj 2>&1"
         else
-          command = "xcodebuild #{defines} #{args} BUILD_LIBRARY_FOR_DISTRIBUTION=YES CONFIGURATION_BUILD_DIR=#{build_dir} clean build -configuration #{build_model} -target #{target_name} -project ./Pods.xcodeproj 2>&1"
+          command = "xcodebuild #{defines} #{args} BUILD_LIBRARY_FOR_DISTRIBUTION=NO CONFIGURATION_BUILD_DIR=#{build_dir} clean build -configuration #{build_model} -target #{target_name} -project ./Pods.xcodeproj 2>&1"
         end
 
         UI.message "command = #{command}"
